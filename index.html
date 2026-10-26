@@ -271,6 +271,7 @@ function updateValues(values) {
   drawChart();
 }
 
+
 function drawChart() {
   const canvas = document.getElementById("chart");
   const rect = canvas.getBoundingClientRect();
@@ -283,37 +284,31 @@ function drawChart() {
   const ctx = canvas.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const w = rect.width;
-  const h = rect.height;
+  const w = rect.width, h = rect.height;
   const pad = { left: 12, right: 12, top: 16, bottom: 30 };
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top - pad.bottom;
+
   const now = Date.now();
-  const start = now - WINDOW_MS;
+  const interval = 60 * 1000;
+  const end = Math.ceil(now / interval) * interval;
+  const start = end - WINDOW_MS;
 
   ctx.clearRect(0, 0, w, h);
   ctx.font = "10px Segoe UI, Arial";
   ctx.lineWidth = 1;
-  ctx.strokeStyle = "#253149";
-  ctx.fillStyle = "#8190aa";
 
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.top + ch * i / 4;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(w - pad.right, y);
-    ctx.stroke();
-  }
-
-  // Zaman ekseni: son 5 dakika, dakikada bir etiket.
+  // Sabit zaman ölçeği: 5 dakikalık pencere
   for (let i = 0; i <= 5; i++) {
     const x = pad.left + cw * i / 5;
+    ctx.strokeStyle = "#253149";
     ctx.beginPath();
     ctx.moveTo(x, pad.top);
     ctx.lineTo(x, pad.top + ch);
     ctx.stroke();
 
-    const time = new Date(start + i * WINDOW_MS / 5);
+    const time = new Date(start + i * interval);
+    ctx.fillStyle = "#8190aa";
     ctx.textAlign = i === 0 ? "left" : i === 5 ? "right" : "center";
     ctx.fillText(
       time.toLocaleTimeString("tr-TR", {
@@ -325,12 +320,22 @@ function drawChart() {
     );
   }
 
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch * i / 4;
+    ctx.strokeStyle = "#253149";
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(w - pad.right, y);
+    ctx.stroke();
+  }
+
   const series = history.map(points =>
-    points.filter(p => p.t >= start && p.t <= now)
+    points.filter(p => p.t >= start && p.t <= end)
   );
   const all = series.flat();
 
   if (!all.length) {
+    ctx.fillStyle = "#8190aa";
     ctx.textAlign = "center";
     ctx.fillText("PLC verisi bekleniyor...", w / 2, h / 2);
     return;
@@ -360,6 +365,7 @@ function drawChart() {
     ctx.stroke();
   });
 }
+
 
 async function refreshData() {
   if (busy) return;
