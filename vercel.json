@@ -1,0 +1,9 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/api/plc-data",
+      "destination": "http://104.249.8.30:1880/plc-data"
+    }
+  ]
+}
