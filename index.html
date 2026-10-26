@@ -1,55 +1,474 @@
-```html
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PLC Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Industrial IoT | Control Center</title>
 <style>
-body{margin:0;padding:24px;background:#101820;color:#fff;font-family:Arial,sans-serif}
-h1{color:#45d6a0}
-.card{background:#1c2935;padding:22px;border-radius:12px;margin-top:20px;max-width:600px}
-.value{font-size:28px;color:#45d6a0;overflow-wrap:anywhere}
-.status{color:#ffc857}
+:root {
+  --bg:#080d18;
+  --panel:#111a2a;
+  --panel2:#0d1523;
+  --border:#243149;
+  --text:#edf4ff;
+  --muted:#8190aa;
+  --cyan:#27d9e8;
+  --green:#42dfa0;
+  --red:#ff647c;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  font-size:14px;
+}
+button {font:inherit}
+.app {display:flex;min-height:100vh}
+.sidebar {
+  width:235px;flex-shrink:0;background:#0b1220;
+  border-right:1px solid var(--border);
+  padding:25px 16px;display:flex;flex-direction:column;
+}
+.brand {display:flex;align-items:center;gap:11px;padding:0 8px 30px}
+.brand-icon {
+  width:39px;height:39px;border-radius:11px;
+  background:linear-gradient(135deg,#24d9e8,#1785bc);
+  display:grid;place-items:center;color:#06111b;font-size:21px;font-weight:900;
+}
+.brand-name {font-weight:800;font-size:16px;letter-spacing:.5px}
+.brand-sub {font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1.6px}
+.section-label {
+  color:#63738e;font-size:10px;font-weight:800;
+  letter-spacing:1.5px;padding:10px 12px;
+}
+.nav {
+  display:flex;align-items:center;gap:12px;
+  padding:12px;border-radius:9px;margin:3px 0;
+  color:#9aa9c0;text-decoration:none;
+}
+.nav.active {background:#12283a;color:var(--cyan);border:1px solid #1b4556}
+.nav .ico {width:20px;text-align:center;font-size:16px}
+.sidebar-bottom {margin-top:auto}
+.device-mini {
+  margin:15px 2px 0;padding:14px;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;
+}
+.mini-title {font-weight:700;margin-bottom:9px}
+.muted {color:var(--muted)}
+.dot {
+  width:8px;height:8px;border-radius:50%;display:inline-block;
+  background:var(--green);box-shadow:0 0 10px #42dfa080;margin-right:7px;
+}
+.dot.off {background:var(--red);box-shadow:0 0 10px #ff647c80}
+.main {flex:1;min-width:0;padding:29px clamp(16px,3vw,38px)}
+.topbar {display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:28px}
+.eyebrow {color:var(--cyan);font-size:10px;font-weight:800;letter-spacing:2px;margin-bottom:8px}
+h1 {font-size:clamp(23px,3vw,30px);margin:0;letter-spacing:-.8px}
+.subtitle {color:var(--muted);margin-top:8px;font-size:13px}
+.top-right {display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill {
+  border:1px solid var(--border);border-radius:8px;padding:10px 12px;
+  background:var(--panel);font-size:12px;color:#b8c6dc;
+}
+.live-pill {border-color:#1c604b;color:var(--green)}
+.grid {display:grid;gap:16px}
+.summary-grid {grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:19px}
+.card {
+  background:linear-gradient(145deg,#121d30,#0e1726);
+  border:1px solid var(--border);border-radius:14px;padding:20px;min-width:0;
+}
+.metric-head {display:flex;align-items:center;justify-content:space-between;gap:8px}
+.metric-label {color:#a2b0c7;font-size:12px;font-weight:600}
+.metric-icon {
+  width:35px;height:35px;border-radius:10px;
+  background:#173042;color:var(--cyan);display:grid;place-items:center;font-size:17px;
+}
+.metric-value {font-size:clamp(26px,3vw,36px);font-weight:750;letter-spacing:-1px;margin:20px 0 8px;overflow-wrap:anywhere}
+.metric-unit {font-size:13px;color:var(--muted);font-weight:500;letter-spacing:0}
+.metric-foot {display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}
+.metric-state {color:var(--green)}
+.content-grid {grid-template-columns:minmax(0,1.7fr) minmax(250px,1fr);margin-bottom:19px}
+.card-title {font-size:14px;font-weight:750}
+.card-desc {color:var(--muted);font-size:12px;margin-top:6px}
+.card-heading {display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px}
+.tag {font-size:10px;color:var(--cyan);background:#12303d;padding:7px 9px;border-radius:6px;white-space:nowrap}
+.chart-wrap {height:220px;position:relative}
+canvas {width:100%;height:100%;display:block}
+.legend {display:flex;gap:17px;flex-wrap:wrap;margin-top:16px}
+.legend span {font-size:11px;color:#a8b6cb;display:flex;align-items:center;gap:7px}
+.legend i {width:8px;height:8px;border-radius:3px;display:inline-block}
+.status-row {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0;border-bottom:1px solid #202c40}
+.status-row:last-child {border-bottom:0}
+.status-name {font-weight:650;font-size:12px}
+.status-sub {font-size:11px;color:var(--muted);margin-top:5px}
+.status-badge {font-size:10px;border-radius:6px;padding:6px 8px;background:#15392f;color:var(--green);white-space:nowrap}
+.status-badge.wait {background:#332d1e;color:#f3c969}
+.status-badge.down {background:#3b202c;color:var(--red)}
+.bottom-grid {grid-template-columns:1.1fr 1fr}
+.table-wrap {overflow-x:auto}
+table {width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}
+th {font-size:10px;letter-spacing:.8px;color:#71819b;font-weight:700}
+td,th {padding:13px 10px;border-bottom:1px solid #202c40}
+td {font-size:12px;color:#c6d2e5}
+tr:last-child td {border-bottom:0}
+.value-cell {color:var(--cyan);font-weight:700}
+.footer {
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-top:22px;padding:15px 2px;color:#62728b;font-size:10px;
+}
+#lastUpdate {color:#a4b4cb}
+@media(max-width:900px) {
+  .sidebar {width:190px}
+  .content-grid {grid-template-columns:1fr}
+}
+@media(max-width:650px) {
+  .app {display:block}
+  .sidebar {width:100%;padding:13px 15px;border-right:0;border-bottom:1px solid var(--border)}
+  .brand {padding:0}
+  .sidebar nav,.sidebar .section-label,.sidebar-bottom {display:none}
+  .main {padding:22px 14px}
+  .topbar {align-items:flex-start;flex-direction:column}
+  .summary-grid {grid-template-columns:1fr}
+  .metric-value {margin:13px 0 8px}
+  .bottom-grid {grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<h1>PLC Dashboard</h1>
-<p>Endüstriyel İzleme Paneli</p>
-<div class="card">
-<h2>PLC Bağlantısı</h2>
-<p id="status" class="status">Bağlanıyor...</p>
-<h3>Gelen PLC Verisi</h3>
-<div id="data" class="value">--</div>
-<p id="updated">Henüz veri alınmadı</p>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">⌁</div>
+      <div>
+        <div class="brand-name">INDUSTRIAL<span style="color:var(--cyan)">.IO</span></div>
+        <div class="brand-sub">MONITORING PLATFORM</div>
+      </div>
+    </div>
+
+    <div class="section-label">MONİTÖRLEME</div>
+    <nav>
+      <a class="nav active" href="#overview"><span class="ico">▦</span> Genel Bakış</a>
+      <a class="nav" href="#measurements"><span class="ico">⌁</span> Canlı Veriler</a>
+      <a class="nav" href="#connection"><span class="ico">◉</span> Cihaz Durumu</a>
+      <a class="nav" href="#history"><span class="ico">▤</span> Veri Geçmişi</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="section-label">SİSTEM</div>
+      <div class="nav"><span class="ico">⚙</span> Sistem Bilgisi</div>
+      <div class="device-mini">
+        <div class="mini-title">PLC İstasyonu 01</div>
+        <div style="font-size:11px;color:#9aa9c0">
+          <span class="dot" id="sideDot"></span><span id="sideStatus">Bağlantı kontrol ediliyor</span>
+        </div>
+        <div class="muted" style="font-size:10px;margin-top:10px">S7-1200 · MQTT</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" id="overview">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">INDUSTRIAL IOT / CONTROL CENTER</div>
+        <h1>Genel Bakış</h1>
+        <div class="subtitle">PLC saha verileri ve gerçek zamanlı sistem izleme</div>
+      </div>
+      <div class="top-right">
+        <div class="pill"><span class="dot" id="topDot"></span><span id="connectionText">Bağlanıyor...</span></div>
+        <div class="pill">↻ <span id="lastUpdate">Veri bekleniyor</span></div>
+      </div>
+    </header>
+
+    <section class="grid summary-grid" id="measurements">
+      <div class="card">
+        <div class="metric-head"><div class="metric-label">PLC DEĞERİ 01</div><div class="metric-icon">⌁</div></div>
+        <div class="metric-value"><span id="v0">--</span> <span class="metric-unit">REAL</span></div>
+        <div class="metric-foot"><span>Canlı ölçüm</span><span class="metric-state">● İzleniyor</span></div>
+      </div>
+      <div class="card">
+        <div class="metric-head"><div class="metric-label">PLC DEĞERİ 02</div><div class="metric-icon">⌖</div></div>
+        <div class="metric-value"><span id="v1">--</span> <span class="metric-unit">REAL</span></div>
+        <div class="metric-foot"><span>Canlı ölçüm</span><span class="metric-state">● İzleniyor</span></div>
+      </div>
+      <div class="card">
+        <div class="metric-head"><div class="metric-label">PLC DEĞERİ 03</div><div class="metric-icon">⌗</div></div>
+        <div class="metric-value"><span id="v2">--</span> <span class="metric-unit">REAL</span></div>
+        <div class="metric-foot"><span>Canlı ölçüm</span><span class="metric-state">● İzleniyor</span></div>
+      </div>
+    </section>
+
+    <section class="grid content-grid">
+      <div class="card">
+        <div class="card-heading">
+          <div>
+            <div class="card-title">Canlı Telemetri</div>
+            <div class="card-desc">Oturum boyunca alınan son ölçümlerin trendi</div>
+          </div>
+          <span class="tag">● GERÇEK ZAMANLI</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart"></canvas></div>
+        <div class="legend">
+          <span><i style="background:#27d9e8"></i> Değer 01</span>
+          <span><i style="background:#8a83ff"></i> Değer 02</span>
+          <span><i style="background:#42dfa0"></i> Değer 03</span>
+        </div>
+      </div>
+
+      <div class="card" id="connection">
+        <div class="card-heading">
+          <div>
+            <div class="card-title">Bağlantı Durumu</div>
+            <div class="card-desc">Veri iletişim hattı</div>
+          </div>
+          <span class="tag">SİSTEM</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Siemens S7-1200</div><div class="status-sub">PLC / Saha kontrolörü</div></div>
+          <span class="status-badge wait" id="plcStatus">Bekleniyor</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Teltonika TRB255</div><div class="status-sub">Modbus TCP / Gateway</div></div>
+          <span class="status-badge wait">API üzerinden izlenmiyor</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Node-RED API</div><div class="status-sub">Veri servisi / HTTP</div></div>
+          <span class="status-badge wait" id="apiStatus">Bağlanıyor</span>
+        </div>
+        <div class="status-row">
+          <div><div class="status-name">Son başarılı veri</div><div class="status-sub" id="lastSeen">Henüz veri alınmadı</div></div>
+          <span class="status-badge wait" id="dataStatus">Bekleniyor</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid bottom-grid" id="history">
+      <div class="card">
+        <div class="card-heading">
+          <div><div class="card-title">Anlık Değer Tablosu</div><div class="card-desc">PLC'den alınan son değerler</div></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>SİNYAL</th><th>SON DEĞER</th><th>VERİ TİPİ</th><th>DURUM</th></tr></thead>
+            <tbody>
+              <tr><td>PLC_REAL_01</td><td class="value-cell" id="t0">--</td><td>REAL</td><td id="ts0">Bekleniyor</td></tr>
+              <tr><td>PLC_REAL_02</td><td class="value-cell" id="t1">--</td><td>REAL</td><td id="ts1">Bekleniyor</td></tr>
+              <tr><td>PLC_REAL_03</td><td class="value-cell" id="t2">--</td><td>REAL</td><td id="ts2">Bekleniyor</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-heading">
+          <div><div class="card-title">Platform Bilgisi</div><div class="card-desc">Mevcut izleme yapılandırması</div></div>
+        </div>
+        <div class="status-row"><div class="status-name">Veri kaynağı</div><span class="muted">Node-RED HTTP API</span></div>
+        <div class="status-row"><div class="status-name">Güncelleme aralığı</div><span class="muted">3 saniye</span></div>
+        <div class="status-row"><div class="status-name">İletişim protokolü</div><span class="muted">HTTP / JSON</span></div>
+        <div class="status-row"><div class="status-name">Grafik geçmişi</div><span class="muted">Bu oturumla sınırlı</span></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>INDUSTRIAL.IO · IIoT MONITORING</span>
+      <span>PLC VERİ İZLEME PANELİ</span>
+      <span id="clock"></span>
+    </footer>
+  </main>
 </div>
+
 <script>
 const API = "/api/plc-data";
+const POLL_MS = 3000;
+const history = [[], [], []];
+const MAX_POINTS = 40;
+let lastSuccess = null;
+let busy = false;
 
-async function update() {
+function setStatus(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.classList.remove("wait", "down");
+  if (type) el.classList.add(type);
+}
+
+function setConnection(online) {
+  document.getElementById("connectionText").textContent =
+    online ? "Canlı bağlantı" : "Bağlantı kesildi";
+  document.getElementById("topDot").classList.toggle("off", !online);
+  document.getElementById("sideDot").classList.toggle("off", !online);
+  document.getElementById("sideStatus").textContent =
+    online ? "Veri alınıyor" : "Veri alınamıyor";
+  setStatus("plcStatus", online ? "Veri geliyor" : "Veri yok", online ? "" : "down");
+  setStatus("apiStatus", online ? "Erişilebilir" : "Erişilemiyor", online ? "" : "down");
+  setStatus("dataStatus", online ? "Güncel" : "Bekleniyor", online ? "" : "down");
+}
+
+function extractValues(input) {
+  let data = input;
+  if (typeof data === "string") {
+    data = data.trim();
+    try { data = JSON.parse(data); }
+    catch { throw new Error("API yanıtı geçerli JSON değil"); }
+  }
+
+  if (data && !Array.isArray(data) && typeof data === "object") {
+    if (data.veri !== undefined) data = data.veri;
+    else if (data.data !== undefined) data = data.data;
+    else if (data.payload !== undefined) data = data.payload;
+    else if (data.input1?.data !== undefined) data = data.input1.data;
+  }
+
+  if (typeof data === "string") {
+    try { data = JSON.parse(data); }
+    catch { throw new Error("Ölçüm verisi çözümlenemedi"); }
+  }
+
+  if (!Array.isArray(data) || data.length < 3) {
+    throw new Error("En az 3 PLC değeri bekleniyor");
+  }
+
+  const values = data.slice(0, 3).map(Number);
+  if (!values.every(Number.isFinite)) {
+    throw new Error("PLC verilerinde geçersiz sayı var");
+  }
+  return values;
+}
+
+function formatValue(value) {
+  return value.toFixed(3);
+}
+
+function updateValues(values) {
+  values.forEach((value, i) => {
+    document.getElementById("v" + i).textContent = formatValue(value);
+    document.getElementById("t" + i).textContent = formatValue(value);
+    document.getElementById("ts" + i).textContent = "Güncel";
+    history[i].push(value);
+    if (history[i].length > MAX_POINTS) history[i].shift();
+  });
+  drawChart();
+}
+
+function drawChart() {
+  const canvas = document.getElementById("chart");
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  const pad = {left: 12, right: 12, top: 16, bottom: 20};
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = "#253149";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#7f90aa";
+  ctx.font = "10px Segoe UI, Arial";
+
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch * i / 4;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(w - pad.right, y);
+    ctx.stroke();
+  }
+
+  const all = history.flat();
+  if (!all.length) {
+    ctx.fillStyle = "#8190aa";
+    ctx.textAlign = "center";
+    ctx.fillText("PLC verisi bekleniyor...", w / 2, h / 2);
+    return;
+  }
+
+  const min = Math.min(...all);
+  const max = Math.max(...all);
+  const range = max - min || Math.max(Math.abs(max) * .1, 1);
+  const low = min - range * .15;
+  const high = max + range * .15;
+  const colors = ["#27d9e8", "#8a83ff", "#42dfa0"];
+
+  history.forEach((series, index) => {
+    if (!series.length) return;
+    ctx.beginPath();
+    series.forEach((v, i) => {
+      const x = pad.left + (series.length === 1 ? cw / 2 : cw * i / (MAX_POINTS - 1));
+      const y = pad.top + ch * (1 - (v - low) / (high - low));
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = colors[index];
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.stroke();
+
+    const last = series[series.length - 1];
+    const x = pad.left + (series.length === 1 ? cw / 2 : cw * (series.length - 1) / (MAX_POINTS - 1));
+    const y = pad.top + ch * (1 - (last - low) / (high - low));
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = colors[index];
+    ctx.fill();
+  });
+}
+
+async function refreshData() {
+  if (busy) return;
+  busy = true;
   try {
-    const response = await fetch(API);
+    const response = await fetch(API + "?_=" + Date.now(), {
+      cache: "no-store",
+      headers: {"Accept": "application/json"}
+    });
     if (!response.ok) throw new Error("HTTP " + response.status);
-    const result = await response.json();
 
-    let value = result.veri ?? result;
-    if (typeof value === "string") {
-      try { value = JSON.parse(value); } catch {}
-    }
+    const raw = await response.text();
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch { throw new Error("API yanıtı JSON olarak okunamadı"); }
 
-    document.getElementById("data").textContent =
-      typeof value === "object" ? JSON.stringify(value) : String(value);
-    document.getElementById("status").textContent = "● Veri alındı";
-    document.getElementById("updated").textContent =
-      "Son güncelleme: " + new Date().toLocaleTimeString("tr-TR");
+    const values = extractValues(parsed);
+    updateValues(values);
+
+    lastSuccess = new Date();
+    setConnection(true);
+    document.getElementById("lastUpdate").textContent =
+      lastSuccess.toLocaleTimeString("tr-TR");
+    document.getElementById("lastSeen").textContent =
+      lastSuccess.toLocaleTimeString("tr-TR");
   } catch (error) {
-    document.getElementById("status").textContent =
-      "● Bağlantı kurulamadı: " + error.message;
+    console.error("PLC veri hatası:", error);
+    setConnection(false);
+  } finally {
+    busy = false;
   }
 }
-update();
-setInterval(update, 3000);
+
+function updateClock() {
+  document.getElementById("clock").textContent =
+    new Date().toLocaleString("tr-TR");
+}
+
+window.addEventListener("resize", drawChart);
+document.querySelectorAll(".nav[href^='#']").forEach(link => {
+  link.addEventListener("click", () => {
+    document.querySelectorAll(".nav").forEach(item => item.classList.remove("active"));
+    link.classList.add("active");
+  });
+});
+
+drawChart();
+updateClock();
+refreshData();
+setInterval(refreshData, POLL_MS);
+setInterval(updateClock, 1000);
 </script>
 </body>
 </html>
-```
